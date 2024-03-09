@@ -1,0 +1,225 @@
+<title>Game</title>
+<style>
+  body {
+    background-color: #f0f0f0;
+    display: grid;
+    place-content: center;
+  }
+
+  canvas {
+    border: 4px solid #000;
+    border-bottom: transparent;
+    background: url("./bkg.png") repeat;
+    margin: 0 auto;
+    display: block;
+    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.4);
+  }
+
+  p {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-wrap: wrap;
+    font-family: "Cascadia Code PL Regular";
+  }
+  .hidden {
+    display: none;
+  }
+  .flex {
+    display: flex;
+  }
+  .dashboard {
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 9px;
+    box-shadow: 0 0 5px inset #00000075;
+    margin-bottom: 50px;
+    text-align: center;
+  }
+</style>
+<p id="textStart">¡Empieza el juego presionando 'Enter'!</p>
+<div id="dashboard" class="hidden dashboard">
+  <p id="winner"></p>
+</div>
+<canvas></canvas>
+<script>
+  const textStart = document.getElementById("textStart");
+  const dashboard = document.getElementById("dashboard");
+  const winner = document.getElementById("winner");
+
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.style.backgroundColor = "black";
+
+  canvas.height = 400;
+  canvas.width = 400;
+
+  // game status
+  let inGame = false;
+
+  // Ball
+  const ballRadius = 3;
+  let x = canvas.width - 30;
+  let y = canvas.height / 2;
+
+  let dx = -2;
+  let dy = -2;
+
+  //   Paddle settings
+  const paddleWidth = 10;
+  const paddleHeight = 50;
+
+  //   paddle 1
+  let paddleUp1 = false;
+  let paddleDown1 = false;
+
+  let paddleX1 = canvas.width - 20;
+  let paddleY1 = canvas.height / 2;
+
+  //   paddle 2
+  let paddleUp2 = false;
+  let paddleDown2 = false;
+
+  let paddleX2 = 10;
+  let paddleY2 = canvas.height / 2;
+
+  let scoreUser1 = 0;
+  let scoreUser2 = 0;
+
+  function drawBall() {
+    ctx.beginPath();
+    ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function ballMovement() {
+    if (y > canvas.width - ballRadius || y < 1 + ballRadius) {
+      dy = -dy;
+    }
+
+    if (x == 0) {
+      dashboard.classList.remove("hidden");
+      dashboard.classList.add("flex");
+      winner.innerText = `¡Felicidades Jugador 1, has ganado!`;
+    } else if (x == canvas.width) {
+      dashboard.classList.remove("hidden");
+      dashboard.classList.add("flex");
+      winner.innerText = `¡Felicidades Jugador 2, has ganado!`;
+    }
+
+    x += dx;
+    y += dy;
+  }
+
+  function paddleDraw1() {
+    ctx.beginPath();
+    ctx.rect(paddleX1, paddleY1, paddleWidth, paddleHeight);
+    ctx.fill();
+    ctx.closePath();
+  }
+  function paddleDraw2() {
+    ctx.beginPath();
+    ctx.rect(paddleX2, paddleY2, paddleWidth, paddleHeight);
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function paddleMovement1() {
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    function handleKeyDown({ key }) {
+      if (key == "ArrowUp") {
+        paddleUp1 = true;
+      } else if (key == "ArrowDown") {
+        paddleDown1 = true;
+      }
+    }
+    function handleKeyUp({ key }) {
+      if (key == "ArrowUp") {
+        paddleUp1 = false;
+      } else if (key == "ArrowDown") {
+        paddleDown1 = false;
+      }
+    }
+
+    if (paddleUp1 && paddleY1 > 0) {
+      paddleY1 += -4;
+    } else if (paddleDown1 && paddleY1 < canvas.height - paddleHeight - 8) {
+      paddleY1 += 4;
+    }
+  }
+
+  function paddleMovement2() {
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    function handleKeyDown({ key }) {
+      if (key == "w") {
+        paddleUp2 = true;
+      } else if (key == "s") {
+        paddleDown2 = true;
+      }
+    }
+    function handleKeyUp({ key }) {
+      if (key == "w") {
+        paddleUp2 = false;
+      } else if (key == "s") {
+        paddleDown2 = false;
+      }
+    }
+
+    if (paddleUp2 && paddleY2 > 0) {
+      paddleY2 += -4;
+    } else if (paddleDown2 && paddleY2 < canvas.height - paddleHeight - 8) {
+      paddleY2 += 4;
+    }
+  }
+
+  function ballCollisions() {
+    if (
+      x == paddleX2 + paddleWidth &&
+      y > paddleY2 - ballRadius &&
+      y < paddleY2 + paddleHeight + ballRadius
+    ) {
+      dx = -dx;
+    } else if (
+      x == paddleX1 &&
+      y > paddleY1 - ballRadius &&
+      y < paddleY1 + paddleHeight + ballRadius
+    ) {
+      dx = -dx;
+    }
+  }
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function draw() {
+    clearCanvas();
+
+    drawBall();
+    ballMovement();
+
+    paddleDraw1();
+    paddleDraw2();
+
+    paddleMovement1();
+    paddleMovement2();
+
+    ballCollisions();
+    window.requestAnimationFrame(draw);
+  }
+
+  document.addEventListener("keydown", function start({ key }) {
+    if ((key == "" || key == "Enter") && inGame == false) {
+      draw();
+      textStart.classList.add("hidden");
+      inGame = true;
+    }
+  });
+  document.addEventListener("DOMContentLoaded", () => {});
+</script>
